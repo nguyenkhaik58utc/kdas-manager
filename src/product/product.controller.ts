@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Post, Put, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProductService } from './product.service';
 import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
@@ -31,7 +31,11 @@ export class ProductController {
   @ApiOperation({ summary: 'Tạo mới sản phẩm' })
   @ApiBody({ type: CreateProductDto })
   @ApiResponse({ status: 201, description: 'Tạo thành công.' })
-  async create(@Body() dto: CreateProductDto) {
+  async create(@Body(new ValidationPipe()) dto: CreateProductDto) {
+    const existing = await this.service.getProductById(dto.id);
+    if (existing) {
+      throw new ConflictException(`Product with id ${dto.id} already exists`);
+    }
     const p = new Product(dto.id, dto.name, dto.price1, dto.price2);
     await this.service.addProduct(p);
     return { message: 'created', id: dto.id };
@@ -43,11 +47,10 @@ export class ProductController {
   @ApiBody({ type: UpdateProductDto })
   @ApiResponse({ status: 200, description: 'Cập nhật thành công.' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy.' })
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
+  async update(@Param('id', ParseIntPipe) id: number, @Body(new ValidationPipe()) dto: UpdateProductDto) {
     const existing = await this.service.getProductById(id);
     if (!existing) throw new NotFoundException('Product not found');
 
-    // Gộp giá trị cũ + mới
     const name = dto.name ?? existing.Name;
     const price1 = dto.price1 ?? existing.price1Value;
     const price2 = dto.price2 ?? existing.price2Value;

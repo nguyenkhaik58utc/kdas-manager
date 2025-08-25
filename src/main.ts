@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-import { ProductModule } from './product/product.module';
+import { ProductModule } from './modules/product/product.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(ProductModule);
